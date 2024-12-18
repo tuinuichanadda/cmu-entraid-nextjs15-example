@@ -80,11 +80,11 @@ export async function POST(
 
   //get basic info
    const cmuBasicInfo = await getCMUBasicInfoAsync(accessToken);
+ 
   if (!cmuBasicInfo)
     return NextResponse.json({ ok: false, message: "Cannot get cmu basic info" }, { status: 400 });   
 
   //Code related to CMU EntraID ends here.
-
   //The rest code is just an example of how you can use CMU basic info to create session
   //if the code reach here, it means that user sign-in using his CMU Account successfully
   //Now we will use acquired baic info (student name, student id, ...) to create session
@@ -96,10 +96,22 @@ export async function POST(
 
   const token = jwt.sign(
     {
-      cmuAccount: cmuBasicInfo.cmuitaccount,
-      firstName: cmuBasicInfo.firstname_EN,
-      lastName: cmuBasicInfo.lastname_EN,
-      studentId: cmuBasicInfo.student_id, //Note that not everyone has this. Teachers and CMU Staffs don't have student id!
+      cmuitaccount_name: cmuBasicInfo.cmuitaccount_name,
+      cmuitaccount: cmuBasicInfo.cmuitaccount,
+      student_id: cmuBasicInfo.student_id,
+      prename_id: cmuBasicInfo.prename_id,
+      prename_TH: cmuBasicInfo.prename_TH,
+      prename_EN: cmuBasicInfo.prename_EN,
+      firstname_TH: cmuBasicInfo.firstname_TH,
+      firstname_EN: cmuBasicInfo.firstname_EN,
+      lastname_TH: cmuBasicInfo.lastname_TH,
+      lastname_EN: cmuBasicInfo.lastname_EN,
+      organization_code: cmuBasicInfo.organization_code,
+      organization_name_TH: cmuBasicInfo.organization_name_TH,
+      organization_name_EN: cmuBasicInfo.organization_name_EN,
+      itaccounttype_id: cmuBasicInfo.itaccounttype_id,
+      itaccounttype_TH:  cmuBasicInfo.itaccounttype_TH,
+      itaccounttype_EN: cmuBasicInfo.itaccounttype_EN //Note that not everyone has this. Teachers and CMU Staffs don't have student id!
     },
     process.env.JWT_SECRET,
     {
