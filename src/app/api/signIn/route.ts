@@ -15,7 +15,7 @@ type ErrorResponse = {
 
 export type SignInResponse = SuccessResponse | ErrorResponse;
 
-//Can view occur at each step of the process, such as before sending a request, after receiving a response, or when an error occurs.
+// //Can view occur at each step of the process, such as before sending a request, after receiving a response, or when an error occurs.
 // axios.interceptors.request.use(req=>{
 //   console.log((req));
 //   return req
@@ -26,33 +26,40 @@ async function getEmtraIDAccessTokenAsync(
   authorizationCode: string
 ): Promise<string | null> {
   try {
-      const response = await axios.post(
-        process.env.CMU_ENTRAID_GET_TOKEN_URL as string,
-        {
-          code: authorizationCode,
-          redirect_uri: process.env.CMU_ENTRAID_REDIRECT_URL,
-          client_id: process.env.CMU_ENTRAID_CLIENT_ID,
-          client_secret: process.env.CMU_ENTRAID_CLIENT_SECRET,
-          scope : process.env.SCOPE,
-          grant_type: "authorization_code"
+    const tokenUrl = process.env.CMU_ENTRAID_GET_TOKEN_URL as string;
+    const redirectUrl = process.env.CMU_ENTRAID_REDIRECT_URL as string;
+    const clientId = process.env.CMU_ENTRAID_CLIENT_ID as string;
+    const clientSecret = process.env.CMU_ENTRAID_CLIENT_SECRET as string;
+    const scope = process.env.SCOPE as string;
+
+    const response = await axios.post(
+      tokenUrl,
+      {
+        code: authorizationCode,
+        redirect_uri: redirectUrl,
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: scope,
+        grant_type: "authorization_code",
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
         }
-        ,
-        {
-          headers: {
-            "content-type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
-      return response.data.access_token;
-  } catch (err) {
+      }
+    ); 
+
+    return response.data.access_token;    
+  } catch (error) {
     return null;
   }
 }
 
 async function getCMUBasicInfoAsync(accessToken: string) {
   try {
+    const besicinfoUrl = process.env.CMU_ENTRAID_GET_BASIC_INFO as string;
     const response = await axios.get(
-      process.env.CMU_ENTRAID_GET_BASIC_INFO as string,
+      besicinfoUrl,
       {
         headers: { Authorization: "Bearer " + accessToken },
       }
@@ -66,9 +73,10 @@ async function getCMUBasicInfoAsync(accessToken: string) {
 export async function POST(
   req: NextRequest
 ): Promise<NextResponse<SignInResponse>> {
-  const body = await req.json();
-  //validate authorizationCode
-  const authorizationCode = body.authorizationCode;
+  const { authorizationCode } = await req.json();
+  
+  if (!authorizationCode)
+    return NextResponse.json({ ok: false, message: "Invalid authorization code" }, { status: 400 });   
 
   if (typeof authorizationCode !== "string")
     return NextResponse.json({ ok: false, message: "Invalid authorization code" }, { status: 400 });    

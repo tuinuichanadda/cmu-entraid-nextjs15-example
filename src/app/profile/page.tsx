@@ -3,10 +3,30 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { WhoAmIResponse } from "../api/whoAmI/route";
+import { redirect } from "next/dist/server/api-utils";
+
+type CmuBasicInfo = {
+  cmuitaccount_name: string;
+  cmuitaccount: string;
+  student_id?: string;
+  prename_id?: string;
+  prename_TH?: string;
+  prename_EN?: string;
+  firstname_TH: string;
+  firstname_EN: string;
+  lastname_TH: string;
+  lastname_EN: string;
+  organization_code: string;
+  organization_name_TH: string;
+  organization_name_EN: string;
+  itaccounttype_id: string;
+  itaccounttype_TH: string;
+  itaccounttype_EN: string;
+};
 
 export default function MePage() {
   const router = useRouter();
-  const [cmuBasicInfolist, setcmuBasicInfo] = useState([{}]);
+  const [cmuBasicInfolist, setcmuBasicInfo] = useState<CmuBasicInfo[]>([]);
   const [fullName, setFullName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
@@ -17,14 +37,13 @@ export default function MePage() {
       .get<{}, AxiosResponse<WhoAmIResponse>, {}>("../api/whoAmI")
       .then((response) => {
         if (response.data.ok) {
-  
           const cmuBasicInfoResponse = response.data.cmuBasicInfo;
 
-          { cmuBasicInfoResponse.map((item:any) => {
+          {cmuBasicInfoResponse.map((item:CmuBasicInfo) => {
            setFullName(item.firstname_EN + " " + item.lastname_EN);
-          })};
-          
-          setcmuBasicInfo( cmuBasicInfoResponse);
+          })};     
+
+          setcmuBasicInfo(cmuBasicInfoResponse);
         }
       })
       .catch((error: AxiosError<WhoAmIResponse>) => {
@@ -47,10 +66,13 @@ export default function MePage() {
     //It will fail only in case of client cannot connect to server
     //Redirect to the logout URL or default page
     //This is left as an exercise for you. Good luck.
-    axios.post("../api/signOut").then((res) => {
-      if (res.data.ok) {
-         router.push(res.data.message); 
-      }
+    axios.post("../api/signOut").then((response) => {   
+      if(response.data.ok) {
+         const SignOut = process.env.CMU_ENTRAID_LOGOUT_URL;
+         router.push(`${SignOut}`); 
+      }else{
+        router.push('../');  
+      }   
     });
   }
 
@@ -58,8 +80,8 @@ export default function MePage() {
     <div className="p-3">
         <h1>Hi, {fullName}</h1>
         <h3> CMUAccountBasicInfo_ResponseDto </h3>
-        {cmuBasicInfolist.map((item:any) => {
-        return<div key={item}>
+        {cmuBasicInfolist.map((item:CmuBasicInfo,key) => {
+        return<div key={key}>
                 <p>cmuitaccount_name : {item.cmuitaccount_name}</p>
                 <p>cmuitaccount : {item.cmuitaccount}</p>
                 <p>student_id : {item.student_id? item.student_id : "No Student Id"}</p>
@@ -76,7 +98,7 @@ export default function MePage() {
                 <p>itaccounttype_id : {item.itaccounttype_id}</p>
                 <p>itaccounttype_TH : {item.itaccounttype_TH}</p>
                 <p>itaccounttype_EN : {item.itaccounttype_EN}</p>
-               </div>
+              </div>
         })}
         <p className="text-danger">{errorMessage}</p>
         <button className="btn btn-danger mb-3" onClick={signOut}>
